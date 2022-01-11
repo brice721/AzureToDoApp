@@ -1,0 +1,117 @@
+﻿@inject HttpClient Http
+
+@page "/todo"
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm">
+            <h3>ToDo (@_toDos.Count(todo => !todo.IsComplete))</h3>
+        </div>
+        <div class="col-sm">
+            <div class="btn-group" role="group" aria-label="Basic example">
+                <button type="button" @onclick="@(() => ToggleView(@All))" class="btn btn-primary">@All</button>
+                <button type="button" @onclick="@(() => ToggleView(@Active))" class="btn btn-primary">@Active</button>
+                <button type="button" @onclick="@(() => ToggleView(@Completed))" class="btn btn-primary">@Completed</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_toDos == null)
+{
+    <p>No Todo Items found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="text-center">Complete</th>
+                <th>Name</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="editRow" style="display:@EditRowStyle">
+                <td class="text-center">
+                    <input type="checkbox" @bind="_editItem.IsComplete" />
+                </td>
+                <td>
+                    <input @bind="_editItem.Title" />
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-success" @onclick="(() => SaveItem(_editItem.Id))">
+                        Save
+                    </button>
+                    <button class="btn btn-danger"
+                            @onclick="@(() => EditRowStyle = "none")">
+                        Cancel
+                    </button>
+                </td>
+            </tr>
+            @foreach (var item in _toDos)
+            {
+                <tr>
+                    <td class="text-center">
+                        <input type="checkbox" @onchange="@((eventArgs) => MarkItemComplete(item, eventArgs.Value))" checked="@(item.IsComplete)" />
+                    </td>
+                    @{
+                        string className = item.CompletionSentiment;
+                    }
+                    @if (className == "Negative")
+                    {
+                        <td style="color:red">@item.Title</td>
+                    } 
+                    else if (className == "Positive")
+                    {
+                        <td style="color:green">@item.Title</td>
+                    }
+                    else
+                    {
+                        <td>@item.Title</td>
+                    }
+                    <td class="text-center">
+                        <button class="btn btn-warning"
+                                @onclick="@(() => EditItem(item.Id))">
+                            Edit
+                        </button>
+                        <button class="btn btn-danger"
+                                @onclick="@(async () => await DeleteItem(item.Id))">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+            <tr id="addRow">
+                <td></td>
+                <td>
+                    <input @bind="NewTodo" placeholder="New Todo Item" />
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-success" @onclick="AddToDo">Add</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+}
+
+@code {
+    public string FontColor { get; set; }
+
+    public string GetColor(string input)
+    {
+        var fontColor = string.Empty;
+
+        switch (input)
+        {
+            case "Negative":
+                fontColor = "red";
+                break;
+            case "Positive":
+                fontColor = "green";
+                break;
+        }
+
+        return fontColor;
+    }
+}
